@@ -1,11 +1,20 @@
 import { TextField, Typography } from "@mui/material";
+import type { TrackRequest } from "./types";
 
-function Playlist() {
+type PlaylistProps = {
+  songs: TrackRequest[];
+};
+
+function Playlist({ songs }: PlaylistProps) {
   return (
     <div>
-      {/* Playlist component content goes here */}
       <Typography variant="h6">Playlist</Typography>
-      <TextField label="Add a new song" variant="outlined" fullWidth />
+      {/* <TextField label="Add a new song" variant="outlined" fullWidth /> */}
+      <ul>
+        {songs.map((song, index) => (
+          <li key={index}>{song.url}</li>
+        ))}
+      </ul>
     </div>
   );
 }

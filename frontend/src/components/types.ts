@@ -1,4 +1,4 @@
-export type Request = {
+export type TrackRequest = {
   guest: string;
   url: string;
   service: Service;

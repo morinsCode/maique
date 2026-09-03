@@ -1,11 +1,15 @@
 import { Typography, TextField, Button } from "@mui/material";
-import type { Request } from "./types";
+import type { TrackRequest } from "./types";
 import { useState } from "react";
 
-function GuestUI() {
-  const [request, setRequest] = useState<Request>({
+type GuestUIProps = {
+  onSubmit: (request: TrackRequest) => void;
+};
+
+function GuestUI({ onSubmit }: GuestUIProps) {
+  const [guestTrackRequest, setGuestTrackRequest] = useState<TrackRequest>({
     guest: "moe",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    url: "",
     service: "youtube",
   });
 
@@ -18,10 +22,16 @@ function GuestUI() {
           variant="outlined"
           fullWidth
           margin="normal"
-          value={request.url}
-          /* onChange={(e) => setRequest({ ...request, url: e.target.value })} */
+          value={guestTrackRequest.url}
+          onChange={(e) =>
+            setGuestTrackRequest({ ...guestTrackRequest, url: e.target.value })
+          }
         />
-        <Button variant="contained" color="primary">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => onSubmit(guestTrackRequest)}
+        >
           Submit
         </Button>
       </div>
