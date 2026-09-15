@@ -10,7 +10,10 @@ type YTNamespace = {
     element: HTMLElement,
     options: {
       videoId: string;
-      events?: { onStateChange?: (event: { data: number }) => void };
+      events?: {
+        onReady?: () => void;
+        onStateChange?: (event: { data: number }) => void;
+      };
     },
   ) => YTPlayerInstance;
   PlayerState: { ENDED: number };
@@ -31,6 +34,7 @@ type YouTubePlayerProps = {
 function YouTubePlayer({ videoId, onEnded }: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
+  const playerReadyRef = useRef(false);
   const onEndedRef = useRef(onEnded);
 
   useEffect(() => {
@@ -42,9 +46,13 @@ function YouTubePlayer({ videoId, onEnded }: YouTubePlayerProps) {
 
     function createPlayer() {
       if (cancelled || !containerRef.current || !window.YT) return;
+      playerReadyRef.current = false;
       playerRef.current = new window.YT.Player(containerRef.current, {
         videoId,
         events: {
+          onReady: () => {
+            playerReadyRef.current = true;
+          },
           onStateChange: (event) => {
             if (event.data === window.YT!.PlayerState.ENDED) {
               onEndedRef.current?.();
@@ -75,12 +83,17 @@ function YouTubePlayer({ videoId, onEnded }: YouTubePlayerProps) {
 
     return () => {
       cancelled = true;
+      playerReadyRef.current = false;
       playerRef.current?.destroy();
       playerRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    // The player isn't ready to accept loadVideoById right after being
+    // constructed (its videoId is already set via the constructor); only
+    // call it once the player has actually fired onReady.
+    if (!playerReadyRef.current) return;
     playerRef.current?.loadVideoById(videoId);
   }, [videoId]);
 

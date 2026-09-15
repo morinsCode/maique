@@ -9,7 +9,7 @@ type SCWidgetInstance = {
 type SCNamespace = {
   Widget: {
     (element: HTMLElement): SCWidgetInstance;
-    Events: { FINISH: string };
+    Events: { FINISH: string; READY: string };
   };
 };
 
@@ -27,6 +27,7 @@ type SoundCloudPlayerProps = {
 function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const widgetRef = useRef<SCWidgetInstance | null>(null);
+  const widgetReadyRef = useRef(false);
   const onEndedRef = useRef(onEnded);
 
   useEffect(() => {
@@ -42,6 +43,9 @@ function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
       widget.bind(window.SC.Widget.Events.FINISH, () => {
         onEndedRef.current?.();
       });
+      widget.bind(window.SC.Widget.Events.READY, () => {
+        widgetReadyRef.current = true;
+      });
       widgetRef.current = widget;
     }
 
@@ -55,13 +59,21 @@ function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
     }
 
     return () => {
+      // Don't call widget.unbind() here: it can run while the widget is
+      // still mid-dispatch of the event that triggered this unmount (e.g.
+      // FINISH), and its internal iframe reference is already gone by then.
+      // Removing the iframe from the DOM tears down its listeners for us.
       cancelled = true;
-      widgetRef.current?.unbind(window.SC?.Widget.Events.FINISH ?? "finish");
+      widgetReadyRef.current = false;
       widgetRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    // The widget isn't ready to accept load() right after being constructed
+    // (its url is already set via the iframe src); only call it once the
+    // widget has actually fired READY.
+    if (!widgetReadyRef.current) return;
     widgetRef.current?.load(url, { auto_play: true });
   }, [url]);
 
