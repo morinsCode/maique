@@ -1,16 +1,93 @@
-function YouTubePlayer({ videoId }: { videoId: string }) {
+import { useEffect, useRef } from "react";
+
+// Minimal shape of the YouTube IFrame Player API used here.
+type YTPlayerInstance = {
+  destroy: () => void;
+  loadVideoById: (videoId: string) => void;
+};
+type YTNamespace = {
+  Player: new (
+    element: HTMLElement,
+    options: {
+      videoId: string;
+      events?: { onStateChange?: (event: { data: number }) => void };
+    },
+  ) => YTPlayerInstance;
+  PlayerState: { ENDED: number };
+};
+
+declare global {
+  interface Window {
+    YT?: YTNamespace;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+type YouTubePlayerProps = {
+  videoId: string;
+  onEnded?: () => void;
+};
+
+function YouTubePlayer({ videoId, onEnded }: YouTubePlayerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<YTPlayerInstance | null>(null);
+  const onEndedRef = useRef(onEnded);
+
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function createPlayer() {
+      if (cancelled || !containerRef.current || !window.YT) return;
+      playerRef.current = new window.YT.Player(containerRef.current, {
+        videoId,
+        events: {
+          onStateChange: (event) => {
+            if (event.data === window.YT!.PlayerState.ENDED) {
+              onEndedRef.current?.();
+            }
+          },
+        },
+      });
+    }
+
+    if (window.YT?.Player) {
+      createPlayer();
+    } else {
+      if (
+        !document.querySelector(
+          'script[src="https://www.youtube.com/iframe_api"]',
+        )
+      ) {
+        const script = document.createElement("script");
+        script.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(script);
+      }
+      const previousCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        previousCallback?.();
+        createPlayer();
+      };
+    }
+
+    return () => {
+      cancelled = true;
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    playerRef.current?.loadVideoById(videoId);
+  }, [videoId]);
+
   return (
     <div>
       <p>Now playing:</p>
-      <iframe
-        width="560"
-        height="315"
-        src={`https://www.youtube.com/embed/${videoId}`}
-        title="YouTube video player"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      ></iframe>
+      <div ref={containerRef} />
     </div>
   );
 }

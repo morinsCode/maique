@@ -13,6 +13,8 @@ import "./App.css";
 function App() {
   const [requests, setRequests] = useState<TrackRequest[]>([]);
   const [playlist, setPlaylist] = useState<TrackRequest[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentSong = playlist[currentIndex];
 
   function handleApprove(index: number) {
     setPlaylist((prev) => [...prev, requests[index]]);
@@ -21,6 +23,10 @@ function App() {
 
   function handleRemove(index: number) {
     setRequests((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleEnded() {
+    setCurrentIndex((i) => (i + 1 < playlist.length ? i + 1 : i));
   }
 
   return (
@@ -34,11 +40,10 @@ function App() {
         onRemove={handleRemove}
       />
       <Playlist songs={playlist} />
-      {playlist.length > 0 && (
+      {currentSong && (
         <YouTubePlayer
-          videoId={
-            extractYouTubeVideoId(playlist[playlist.length - 1].url) ?? ""
-          }
+          videoId={extractYouTubeVideoId(currentSong.url) ?? ""}
+          onEnded={handleEnded}
         />
       )}
     </>
