@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@mui/material";
 import GuestUI from "./components/GuestUI.tsx";
 import DjUI from "./components/DjUI.tsx";
 import Playlist from "./components/Playlist.tsx";
@@ -15,6 +16,7 @@ function App() {
   const [requests, setRequests] = useState<TrackRequest[]>([]);
   const [playlist, setPlaylist] = useState<TrackRequest[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const currentSong = playlist[currentIndex];
 
   function handleApprove(index: number) {
@@ -41,14 +43,24 @@ function App() {
         onRemove={handleRemove}
       />
       <Playlist songs={playlist} />
+      {!soundEnabled && (
+        <Button variant="outlined" onClick={() => setSoundEnabled(true)}>
+          Enable sound
+        </Button>
+      )}
       {currentSong?.service === "youtube" && (
         <YouTubePlayer
           videoId={extractYouTubeVideoId(currentSong.url) ?? ""}
+          soundEnabled={soundEnabled}
           onEnded={handleEnded}
         />
       )}
       {currentSong?.service === "soundcloud" && (
-        <SoundCloudPlayer url={currentSong.url} onEnded={handleEnded} />
+        <SoundCloudPlayer
+          url={currentSong.url}
+          soundEnabled={soundEnabled}
+          onEnded={handleEnded}
+        />
       )}
     </>
   );

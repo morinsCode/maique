@@ -5,6 +5,7 @@ type SCWidgetInstance = {
   load: (url: string, options?: { auto_play?: boolean }) => void;
   bind: (eventName: string, callback: () => void) => void;
   unbind: (eventName: string) => void;
+  setVolume: (volume: number) => void;
 };
 type SCNamespace = {
   Widget: {
@@ -21,18 +22,31 @@ declare global {
 
 type SoundCloudPlayerProps = {
   url: string;
+  soundEnabled: boolean;
   onEnded?: () => void;
 };
 
-function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
+function SoundCloudPlayer({
+  url,
+  soundEnabled,
+  onEnded,
+}: SoundCloudPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const widgetRef = useRef<SCWidgetInstance | null>(null);
   const widgetReadyRef = useRef(false);
+  const soundEnabledRef = useRef(soundEnabled);
   const onEndedRef = useRef(onEnded);
 
   useEffect(() => {
     onEndedRef.current = onEnded;
   }, [onEnded]);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    if (widgetReadyRef.current) {
+      widgetRef.current?.setVolume(soundEnabled ? 100 : 0);
+    }
+  }, [soundEnabled]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +59,7 @@ function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
       });
       widget.bind(window.SC.Widget.Events.READY, () => {
         widgetReadyRef.current = true;
+        widget.setVolume(soundEnabledRef.current ? 100 : 0);
       });
       widgetRef.current = widget;
     }
@@ -85,7 +100,7 @@ function SoundCloudPlayer({ url, onEnded }: SoundCloudPlayerProps) {
         title="SoundCloud player"
         width="100%"
         height="166"
-        src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`}
+        src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`}
         allow="autoplay"
       />
     </div>
