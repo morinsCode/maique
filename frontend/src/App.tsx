@@ -1,20 +1,21 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
-import GuestUI from "./components/GuestUI.tsx";
-import DjUI from "./components/DjUI.tsx";
-import Playlist from "./components/Playlist.tsx";
-import YouTubePlayer from "./components/YouTubePlayer.tsx";
-import SoundCloudPlayer from "./components/SoundCloudPlayer.tsx";
+import { Routes, Route } from "react-router";
+import LandingPage from "./pages/LandingPage.tsx";
+import GuestPage from "./pages/GuestPage.tsx";
+import DjPage from "./pages/DjPage.tsx";
 import type { TrackRequest } from "./components/types.ts";
-import { extractYouTubeVideoId } from "./providers/youtube.ts";
-/* import heroImg from "./assets/hero.png";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg"; */
+import { useSyncedState } from "./hooks/useSyncedState.ts";
 import "./App.css";
 
 function App() {
-  const [requests, setRequests] = useState<TrackRequest[]>([]);
-  const [playlist, setPlaylist] = useState<TrackRequest[]>([]);
+  const [requests, setRequests] = useSyncedState<TrackRequest[]>(
+    "requests",
+    [],
+  );
+  const [playlist, setPlaylist] = useSyncedState<TrackRequest[]>(
+    "playlist",
+    [],
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const currentSong = playlist[currentIndex];
@@ -33,36 +34,32 @@ function App() {
   }
 
   return (
-    <>
-      <GuestUI
-        onSubmit={(request) => setRequests((prev) => [...prev, request])}
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/guest"
+        element={
+          <GuestPage
+            onSubmit={(request) => setRequests((prev) => [...prev, request])}
+          />
+        }
       />
-      <DjUI
-        requests={requests}
-        onApprove={handleApprove}
-        onRemove={handleRemove}
+      <Route
+        path="/dj"
+        element={
+          <DjPage
+            requests={requests}
+            playlist={playlist}
+            currentSong={currentSong}
+            soundEnabled={soundEnabled}
+            onApprove={handleApprove}
+            onRemove={handleRemove}
+            onEnableSound={() => setSoundEnabled(true)}
+            onEnded={handleEnded}
+          />
+        }
       />
-      <Playlist songs={playlist} />
-      {!soundEnabled && (
-        <Button variant="outlined" onClick={() => setSoundEnabled(true)}>
-          Enable sound
-        </Button>
-      )}
-      {currentSong?.service === "youtube" && (
-        <YouTubePlayer
-          videoId={extractYouTubeVideoId(currentSong.url) ?? ""}
-          soundEnabled={soundEnabled}
-          onEnded={handleEnded}
-        />
-      )}
-      {currentSong?.service === "soundcloud" && (
-        <SoundCloudPlayer
-          url={currentSong.url}
-          soundEnabled={soundEnabled}
-          onEnded={handleEnded}
-        />
-      )}
-    </>
+    </Routes>
   );
 }
 

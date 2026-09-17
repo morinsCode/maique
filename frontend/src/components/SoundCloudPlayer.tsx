@@ -101,7 +101,7 @@ function SoundCloudPlayer({
         width="100%"
         height="166"
         src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`}
-        allow="autoplay"
+        allow="autoplay; encrypted-media"
       />
     </div>
   );
