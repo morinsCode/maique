@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router";
 import LandingPage from "./pages/LandingPage.tsx";
 import GuestPage from "./pages/GuestPage.tsx";
 import DjPage from "./pages/DjPage.tsx";
-import type { TrackRequest } from "./components/types.ts";
+import type { TrackRequest } from "../../shared/types.ts";
 import { useSyncedState } from "./hooks/useSyncedState.ts";
 import "./App.css";
 

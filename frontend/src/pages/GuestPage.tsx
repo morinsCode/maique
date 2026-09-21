@@ -1,5 +1,5 @@
 import GuestUI from "../components/GuestUI.tsx";
-import type { TrackRequest } from "../components/types.ts";
+import type { TrackRequest } from "../../../shared/types.ts";
 
 type GuestPageProps = {
   onSubmit: (request: TrackRequest) => void;

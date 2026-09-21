@@ -24,3 +24,25 @@
   - Both players now start muted (`mute: 1` for YouTube; `setVolume(0)` for SoundCloud) so autoplay is guaranteed.
   - Added `soundEnabled` prop to both players; unmutes/sets volume to 100 on the provider's ready event or when the prop flips true.
   - `App.tsx` — added `soundEnabled` state and an "Enable sound" button (single click enables sound for the current and all subsequent songs in the session).
+
+## 2026-09-17
+
+- Restructured the app to use React Router (`react-router` v7) instead of rendering all UI in one tree (commit `fb83665`, 13:34):
+  - `main.tsx` — wraps `App` in `BrowserRouter`.
+  - `App.tsx` — replaced direct rendering of `GuestUI`/`DjUI`/`Playlist`/players with `<Routes>`: `/` → `LandingPage`, `/guest` → `GuestPage`, `/dj` → `DjPage`. State (`requests`, `playlist`, `currentIndex`, `soundEnabled`) and handlers stay lifted in `App.tsx` and are passed down as props.
+  - `pages/LandingPage.tsx` (new) — links to `/guest` and `/dj`.
+  - `pages/GuestPage.tsx` (new) — renders `GuestUI`, forwards `onSubmit`.
+  - `pages/DjPage.tsx` (new) — renders `DjUI`, `Playlist`, the "Enable sound" button, and the YouTube/SoundCloud players (DJ's tab is where playback happens).
+  - `pages/DisplayPage.tsx` — created empty; deferred, not wired up yet.
+- Added cross-tab state sync via `localStorage`:
+  - `hooks/useSyncedState.ts` (new) — drop-in replacement for `useState` that persists a value to `localStorage` and listens for the `storage` event to pick up changes made in other tabs of the same browser.
+  - `App.tsx` — `requests` and `playlist` now use `useSyncedState`; `currentIndex` and `soundEnabled` remain plain `useState` (playback state is intentionally per-tab).
+  - Verified: submitting a guest request in one tab now appears in the DJ tab in the same browser without a manual refresh; confirmed this does not work across separate browser tabs/windows opened independently, or across devices, since `localStorage` is per-browser.
+- Fixed SoundCloud playback: added `encrypted-media` to the player iframe's `allow` attribute.
+- Discussed and planned (not yet implemented) a backend to support cross-device guest requests: Node.js + Express, Server-Sent Events for live updates, in-memory store, single global session. Plan recorded for a future session; no backend code exists yet.
+
+### Known limitations / follow-ups
+
+- `DisplayPage` is an empty placeholder — no dedicated "now playing" view yet.
+- Cross-device guest requests still don't work; requires the planned backend.
+- `localStorage` sync is a stopgap for local, same-browser multi-tab testing and will likely be retired once a backend is introduced.

@@ -1,5 +1,5 @@
 import { Typography, TextField, Button } from "@mui/material";
-import type { TrackRequest } from "./types";
+import type { TrackRequest } from "../../../shared/types.ts";
 import { useState } from "react";
 import { detectService } from "../providers/detect";
 

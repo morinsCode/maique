@@ -1,5 +1,5 @@
 import { Typography, Button } from "@mui/material";
-import type { TrackRequest } from "./types";
+import type { TrackRequest } from "../../../shared/types.ts";
 
 type DjUIProps = {
   requests: TrackRequest[];

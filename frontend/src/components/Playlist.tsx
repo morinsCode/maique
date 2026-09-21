@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import type { TrackRequest } from "./types";
+import type { TrackRequest } from "../../../shared/types.ts";
 
 type PlaylistProps = {
   songs: TrackRequest[];

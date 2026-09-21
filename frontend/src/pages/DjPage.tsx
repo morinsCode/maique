@@ -3,7 +3,7 @@ import DjUI from "../components/DjUI.tsx";
 import Playlist from "../components/Playlist.tsx";
 import YouTubePlayer from "../components/YouTubePlayer.tsx";
 import SoundCloudPlayer from "../components/SoundCloudPlayer.tsx";
-import type { TrackRequest } from "../components/types.ts";
+import type { TrackRequest } from "../../../shared/types.ts";
 import { extractYouTubeVideoId } from "../providers/youtube.ts";
 
 type DjPageProps = {
