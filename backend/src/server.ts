@@ -1,5 +1,6 @@
 import express from "express";
-import type { TrackRequest } from "../../shared/types.ts";
+import { roomsRouter } from "./routes/rooms.routes.ts";
+import { setupWebSocket } from "./websocket.ts";
 
 const app = express();
 const port = 3000;
@@ -10,9 +11,10 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(port, () => {
+app.use("/rooms", roomsRouter);
+
+const server = app.listen(port, () => {
   console.log(`backend listening on http://localhost:${port}`);
 });
 
-// keeps the TrackRequest import from being flagged as unused until routes are added
-export type { TrackRequest };
+setupWebSocket(server);

@@ -4,7 +4,7 @@
 
 MaiQue is a mixed-provider collaborative playlist application.
 
-Current development phase: frontend-only prototype using React, Vite, and TypeScript. Do not add backend, database, rooms, or real-time collaboration unless explicitly requested.
+Current development phase: Frontend and backend prototype using React, Vite, ExpressJS and TypeScript.
 
 ## Coding guidelines
 
