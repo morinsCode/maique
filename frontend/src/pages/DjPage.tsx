@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, Stack, TextField, Typography } from "@mui/material";
 import DjUI from "../components/DjUI.tsx";
 import Playlist from "../components/Playlist.tsx";
 import YouTubePlayer from "../components/YouTubePlayer.tsx";
@@ -7,6 +7,7 @@ import type { TrackRequest } from "../../../shared/types.ts";
 import { extractYouTubeVideoId } from "../providers/youtube.ts";
 
 type DjPageProps = {
+  roomId: string;
   requests: TrackRequest[];
   playlist: TrackRequest[];
   currentSong: TrackRequest | undefined;
@@ -18,6 +19,7 @@ type DjPageProps = {
 };
 
 function DjPage({
+  roomId,
   requests,
   playlist,
   currentSong,
@@ -29,6 +31,24 @@ function DjPage({
 }: DjPageProps) {
   return (
     <>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ padding: 2, alignItems: "center" }}
+      >
+        <Typography>Room code:</Typography>
+        <TextField
+          size="small"
+          value={roomId}
+          slotProps={{ htmlInput: { readOnly: true } }}
+        />
+        <Button
+          variant="outlined"
+          onClick={() => navigator.clipboard.writeText(roomId)}
+        >
+          Copy
+        </Button>
+      </Stack>
       <DjUI requests={requests} onApprove={onApprove} onRemove={onRemove} />
       <Playlist songs={playlist} />
       {!soundEnabled && (

@@ -10,5 +10,10 @@ export default defineConfig({
       // allow importing shared/ types, which lives outside this project's root
       allow: [fileURLToPath(new URL("..", import.meta.url))],
     },
+    // forward API/WebSocket calls to the backend so the browser sees a single origin
+    proxy: {
+      "/rooms": { target: "http://localhost:3000", ws: true },
+      "/health": "http://localhost:3000",
+    },
   },
 });
