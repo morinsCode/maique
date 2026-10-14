@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { loadScriptOnce } from "../providers/loadScript.ts";
 
 // Minimal shape of the SoundCloud Widget API used here.
 type SCWidgetInstance = {
@@ -64,14 +65,9 @@ function SoundCloudPlayer({
       widgetRef.current = widget;
     }
 
-    if (window.SC) {
-      createWidget();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://w.soundcloud.com/player/api.js";
-      script.onload = createWidget;
-      document.body.appendChild(script);
-    }
+    loadScriptOnce("https://w.soundcloud.com/player/api.js")
+      .then(createWidget)
+      .catch(console.error);
 
     return () => {
       // Don't call widget.unbind() here: it can run while the widget is

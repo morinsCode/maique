@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { loadScriptOnce } from "../providers/loadScript.ts";
 
 // Minimal shape of the YouTube IFrame Player API used here.
 type YTPlayerInstance = {
@@ -86,15 +87,11 @@ function YouTubePlayer({ videoId, soundEnabled, onEnded }: YouTubePlayerProps) {
     if (window.YT?.Player) {
       createPlayer();
     } else {
-      if (
-        !document.querySelector(
-          'script[src="https://www.youtube.com/iframe_api"]',
-        )
-      ) {
-        const script = document.createElement("script");
-        script.src = "https://www.youtube.com/iframe_api";
-        document.body.appendChild(script);
-      }
+      // The script finishing loading doesn't mean the API is ready (it loads
+      // more code itself), so readiness is still signalled by the callback.
+      loadScriptOnce("https://www.youtube.com/iframe_api").catch(
+        console.error,
+      );
       const previousCallback = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
         previousCallback?.();
