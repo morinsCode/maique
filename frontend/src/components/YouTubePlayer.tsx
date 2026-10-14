@@ -1,34 +1,6 @@
 import { useEffect, useRef } from "react";
 import { loadScriptOnce } from "../providers/loadScript.ts";
-
-// Minimal shape of the YouTube IFrame Player API used here.
-type YTPlayerInstance = {
-  destroy: () => void;
-  loadVideoById: (videoId: string) => void;
-  unMute: () => void;
-  setVolume: (volume: number) => void;
-};
-type YTNamespace = {
-  Player: new (
-    element: HTMLElement,
-    options: {
-      videoId: string;
-      playerVars?: { autoplay?: 0 | 1; mute?: 0 | 1 };
-      events?: {
-        onReady?: () => void;
-        onStateChange?: (event: { data: number }) => void;
-      };
-    },
-  ) => YTPlayerInstance;
-  PlayerState: { ENDED: number };
-};
-
-declare global {
-  interface Window {
-    YT?: YTNamespace;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
+import type { YTPlayer as YTPlayerInstance } from "../providers/youtubeApi.ts";
 
 type YouTubePlayerProps = {
   videoId: string;
