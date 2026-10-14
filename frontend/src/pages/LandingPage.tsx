@@ -94,7 +94,7 @@ function LandingPage() {
             component="h1"
             sx={{
               m: 0,
-              maxWidth: 900,
+              maxWidth: 1000,
               fontFamily: '"Roboto Condensed", "Arial Narrow", sans-serif',
               fontSize: "clamp(3.6rem, 8vw, 8.5rem)",
               fontWeight: 900,
@@ -103,8 +103,16 @@ function LandingPage() {
               textTransform: "uppercase",
             }}
           >
-            Que Music
+            {/*  Que The Music
             <br />
+            One room
+            <br />
+            One sound */}
+            Que The Music
+            <br />
+            Crowd requests
+            <br />
+            DJ selects
           </Typography>
 
           <Typography
@@ -114,7 +122,7 @@ function LandingPage() {
               fontSize: { xs: "1rem", md: "1.25rem" },
             }}
           >
-            Add requests DJ approves Everyone hears it
+            A shared music queue for events
           </Typography>
 
           <Stack
@@ -162,7 +170,7 @@ function LandingPage() {
                 },
               }}
             >
-              Enter a room →
+              Request Track →
             </Button>
           </Stack>
 
@@ -229,10 +237,10 @@ function LandingPage() {
             backgroundImage: `
               linear-gradient(
                 135deg,
-                rgba(20, 0, 110, 0.38),
-                rgba(0, 80, 255, 0.28)
+                rgba(3, 0, 12, 0.38),
+                rgba(2, 11, 31, 0.28)
               ),
-              url("/images/club-dj.png")
+              url("/images/club-dj-bw.png")
             `,
             backgroundColor: "#090d24",
             backgroundSize: "cover",
