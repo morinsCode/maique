@@ -30,3 +30,7 @@ export interface PlayerAdapter {
   // Tear down the player and its iframe. Safe to call more than once.
   destroy(): void;
 }
+
+// The adapters available right now, keyed by provider. A provider without
+// an adapter yet (e.g. Spotify) is simply missing.
+export type PlayerAdapters = Partial<Record<Service, PlayerAdapter>>;
