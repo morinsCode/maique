@@ -33,7 +33,17 @@ Run backend and frontend dev servers concurrently (separate terminals) for local
 
 **Frontend sync model:** `frontend/src/hooks/useRoomState.ts` is the single integration point with the backend — it fetches initial state via REST, opens a WebSocket for live updates with auto-reconnect (re-fetches state on reconnect in case it missed updates while disconnected), and exposes `submitRequest`/`approve`/`reject` as REST calls. `App.tsx` reads `roomId` from the React Router URL param and wires this hook into `DjPage` (DJ view) and `GuestPage` (guest view) — there is no other state management layer; backend is the source of truth and nothing is persisted to `localStorage`.
 
-**Provider abstraction:** Provider-specific logic (YouTube, SoundCloud, Spotify) is kept out of domain/UI code. `frontend/src/providers/` holds one file per provider (URL detection/parsing only, e.g. `detectService`, `extractYouTubeVideoId`, `isSoundCloudUrl`); `frontend/src/components/YouTubePlayer.tsx` / `SoundCloudPlayer.tsx` are the matching provider-specific playback components. Domain code elsewhere uses the neutral `Track`/`TrackRequest`/`Service` types, never provider-specific shapes.
+**Provider abstraction:** Provider-specific logic (YouTube, SoundCloud, Spotify) is kept out of domain/UI code. There is no separate `Track` type: `TrackRequest` (`{ guest, url, service }`) is the track type everywhere, and playlist entries have no id (they're addressed by index; the backend only ever appends to the playlist). `frontend/src/providers/` holds all provider-specific code:
+- URL helpers: `detect.ts` (`detectService`), `youtube.ts` (`extractYouTubeVideoId`), `soundcloud.ts` (`isSoundCloudUrl`).
+- API loaders/types: `loadScript.ts` (`loadScriptOnce`, cached per URL), `youtubeApi.ts` (`loadYouTubeApi`, resolves on `onYouTubeIframeAPIReady`), `soundcloudApi.ts` (`loadSoundCloudApi`).
+- Adapters: `youtubeAdapter.ts` / `soundcloudAdapter.ts` — factory functions (`createYouTubeAdapter(container)`) implementing the `PlayerAdapter` contract.
+
+**Unified playback (DJ page):** one MaiQue player UI controls whichever provider plays the current track — unified control, not a unified audio engine.
+- `frontend/src/playback/types.ts` defines the provider-neutral `PlayerAdapter` contract (`load(track, { autoplay })`, `play`, `pause`, `stop`, `subscribe(listener) → unsubscribe`, `destroy`) and the `PlayerEvent` union (`playing` / `paused` / `ended` / `error`).
+- Adapters create their player lazily on the first `load()`, keep readiness internal (every method awaits a ready promise), emit events on a later tick (`setTimeout`) so listeners never run inside the provider's own handler, and own everything inside their container — React renders the container empty and never touches the iframe. `destroy()` is idempotent (StrictMode creates/destroys/recreates in dev).
+- `frontend/src/playback/PlayerHosts.tsx` renders one container per provider for the whole DJ session, creates the adapters, and *parks* inactive players (invisible 1px box — not `display: none`, which can stop embedded players from initialising). The active player stays visible.
+- `frontend/src/playback/usePlaybackController.ts` owns `currentIndex`, `isPlaying` (from adapter events), the DJ's play intent, and an autoplay-blocked flag. It picks the adapter via `adapters[track.service]`, stops the previous provider before loading a different one, drops superseded loads with a `cancelled` flag, subscribes only to the active adapter, and advances on `ended`/`error`. It never imports provider code. Product rule: approving a track never starts it — after the queue runs out the play intent resets and the next approved track is only cued.
+- To add a provider (e.g. Spotify): write `providers/spotifyAdapter.ts` implementing `PlayerAdapter` and add it in `PlayerHosts`; the controller needs no changes. Today a track whose provider has no adapter (Spotify) simply doesn't play: no player is shown, Play does nothing, and the DJ uses Next.
 
 **Routes:** `/` (LandingPage — create/join a room), `/guest/:roomId` (GuestPage — submit requests), `/dj/:roomId` (DjPage — approve/reject requests, playback). There's also a `DisplayPage` component not yet wired into a route.
 
@@ -42,7 +52,7 @@ Run backend and frontend dev servers concurrently (separate terminals) for local
 - TypeScript everywhere; avoid `any`.
 - React function components and hooks only.
 - Prefer simple, readable code over premature abstraction; keep components small and focused.
-- Keep provider-specific logic (Spotify/YouTube/SoundCloud) isolated in `frontend/src/providers/`; use the neutral `Track`/`Service` types elsewhere.
+- Keep provider-specific logic (Spotify/YouTube/SoundCloud) isolated in `frontend/src/providers/`; use the neutral `Track`/`Service` types elsewhere (in this codebase `TrackRequest` plays the `Track` role).
 - Preserve the `frontend/` / `backend/` / `shared/` separation.
 - Do not install new libraries without discussing the need first.
 - Do not expand MVP scope without explicit instruction.

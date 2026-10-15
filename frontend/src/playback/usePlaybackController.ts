@@ -2,6 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrackRequest } from "../../../shared/types.ts";
 import type { PlayerAdapter, PlayerAdapters } from "./types.ts";
 
+// How long to wait for a "playing" event after asking a player to start,
+// before assuming the browser blocked it.
+const BLOCKED_AFTER_MS = 5000;
+
 // Owns "what is playing": which playlist position is current, which provider
 // adapter is in charge of it, and whether the DJ wants music. It only knows
 // the PlayerAdapter contract — never YouTube or SoundCloud specifics.
@@ -14,6 +18,41 @@ export function usePlaybackController(playlist: TrackRequest[]) {
   // by itself only if the DJ hadn't paused.
   const [isPlaying, setIsPlaying] = useState(false);
   const wantsToPlayRef = useRef(false);
+  // The same as isPlaying, but readable from inside a timer callback, which
+  // would otherwise only see the value from the render that created it.
+  const isPlayingRef = useRef(false);
+
+  // True when we asked a player to start but it never reported "playing" —
+  // most likely the browser's autoplay policy blocked it. We never retry by
+  // ourselves; the UI asks the DJ to press Play.
+  const [isBlocked, setIsBlocked] = useState(false);
+  const blockedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Call after asking a player to start: if it isn't playing a few seconds
+  // later, flag it as blocked.
+  const expectPlaying = useCallback(() => {
+    clearTimeout(blockedTimerRef.current);
+    blockedTimerRef.current = setTimeout(() => {
+      if (!isPlayingRef.current) setIsBlocked(true);
+    }, BLOCKED_AFTER_MS);
+  }, []);
+
+  const clearBlocked = useCallback(() => {
+    clearTimeout(blockedTimerRef.current);
+    setIsBlocked(false);
+  }, []);
+
+  const setPlaying = useCallback(
+    (playing: boolean) => {
+      isPlayingRef.current = playing;
+      setIsPlaying(playing);
+      if (playing) clearBlocked();
+    },
+    [clearBlocked],
+  );
+
+  // Don't leave a timer running after the DJ page is gone.
+  useEffect(() => () => clearTimeout(blockedTimerRef.current), []);
 
   const currentTrack: TrackRequest | undefined = playlist[currentIndex];
   const activeService = currentTrack?.service;
@@ -53,21 +92,27 @@ export function usePlaybackController(playlist: TrackRequest[]) {
       if (previous && previous !== adapter) await previous.stop();
       if (cancelled) return;
 
-      await adapter.load(track, { autoplay: wantsToPlayRef.current });
+      const autoplay = wantsToPlayRef.current;
+      await adapter.load(track, { autoplay });
 
-      // We lost the race while loading: a newer track on a *different*
-      // provider has taken over, so silence what we just loaded.
-      if (cancelled && loadedAdapterRef.current !== adapter) {
-        await adapter.stop();
+      if (cancelled) {
+        // We lost the race while loading: a newer track on a *different*
+        // provider has taken over, so silence what we just loaded.
+        if (loadedAdapterRef.current !== adapter) await adapter.stop();
+        return;
       }
+      // Started without a click, so this is where autoplay blocking bites.
+      if (autoplay) expectPlaying();
     }
 
     switchTrack(activeAdapter, track).catch(console.error);
 
     return () => {
       cancelled = true;
+      // A hint about the previous track no longer applies.
+      clearBlocked();
     };
-  }, [activeAdapter, currentIndex, currentUrl]);
+  }, [activeAdapter, currentIndex, currentUrl, expectPlaying, clearBlocked]);
 
   // useCallback keeps the same function between renders until the playlist
   // length changes, so the subscription below isn't redone on every render.
@@ -93,23 +138,27 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     // Only the active adapter is subscribed, so events from the previous
     // provider are never heard. subscribe() returns the cleanup function.
     return activeAdapter.subscribe((event) => {
-      if (event.type === "playing") setIsPlaying(true);
-      if (event.type === "paused") setIsPlaying(false);
+      if (event.type === "playing") setPlaying(true);
+      if (event.type === "paused") setPlaying(false);
       if (event.type === "ended" || event.type === "error") {
         if (event.type === "error") console.error(event.message);
-        setIsPlaying(false);
+        setPlaying(false);
         advance();
       }
     });
-  }, [activeAdapter, advance]);
+  }, [activeAdapter, advance, setPlaying]);
 
   function play() {
     wantsToPlayRef.current = true;
-    activeAdapter?.play().catch(console.error);
+    activeAdapter
+      ?.play()
+      .then(() => expectPlaying())
+      .catch(console.error);
   }
 
   function pause() {
     wantsToPlayRef.current = false;
+    clearBlocked();
     activeAdapter?.pause().catch(console.error);
   }
 
@@ -117,6 +166,7 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     currentTrack,
     currentIndex,
     isPlaying,
+    isBlocked,
     canGoNext,
     play,
     pause,

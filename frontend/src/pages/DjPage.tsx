@@ -48,6 +48,7 @@ function DjPage({
       {playback.currentTrack ? (
         <PlayerControls
           isPlaying={playback.isPlaying}
+          isBlocked={playback.isBlocked}
           canGoNext={playback.canGoNext}
           onPlay={playback.play}
           onPause={playback.pause}
