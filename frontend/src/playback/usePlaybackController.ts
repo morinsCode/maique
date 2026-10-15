@@ -75,6 +75,19 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     setCurrentIndex((i) => (i + 1 < playlist.length ? i + 1 : i));
   }, [playlist.length]);
 
+  // Like next(), but used when a track finishes: it may step one past the
+  // last track. currentTrack is then undefined (nothing to play), and as soon
+  // as a new track is approved, playlist[currentIndex] exists again and the
+  // load effect cues it up.
+  const advance = useCallback(() => {
+    if (currentIndex + 1 >= playlist.length) {
+      // The queue ran out, so the music stops here. A newly approved track
+      // is only cued; the DJ starts it with Play.
+      wantsToPlayRef.current = false;
+    }
+    setCurrentIndex(Math.min(currentIndex + 1, playlist.length));
+  }, [currentIndex, playlist.length]);
+
   useEffect(() => {
     if (!activeAdapter) return;
     // Only the active adapter is subscribed, so events from the previous
@@ -85,10 +98,10 @@ export function usePlaybackController(playlist: TrackRequest[]) {
       if (event.type === "ended" || event.type === "error") {
         if (event.type === "error") console.error(event.message);
         setIsPlaying(false);
-        next();
+        advance();
       }
     });
-  }, [activeAdapter, next]);
+  }, [activeAdapter, advance]);
 
   function play() {
     wantsToPlayRef.current = true;

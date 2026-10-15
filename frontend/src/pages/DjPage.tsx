@@ -45,7 +45,7 @@ function DjPage({
       </Stack>
       <DjUI requests={requests} onApprove={onApprove} onRemove={onRemove} />
       <Playlist songs={playlist} />
-      {playback.currentTrack && (
+      {playback.currentTrack ? (
         <PlayerControls
           isPlaying={playback.isPlaying}
           canGoNext={playback.canGoNext}
@@ -53,6 +53,10 @@ function DjPage({
           onPause={playback.pause}
           onNext={playback.next}
         />
+      ) : (
+        <Typography sx={{ padding: 2 }}>
+          Waiting for the next approved track…
+        </Typography>
       )}
       <PlayerHosts {...playback.hostProps} />
     </>
