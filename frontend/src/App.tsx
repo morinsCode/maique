@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Routes, Route, useParams } from "react-router";
 import LandingPage from "./pages/LandingPage.tsx";
 import GuestPage from "./pages/GuestPage.tsx";
@@ -9,22 +8,14 @@ import "./App.css";
 function DjRoom() {
   const { roomId } = useParams<{ roomId: string }>();
   const { requests, playlist, approve, reject } = useRoomState(roomId ?? "");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const currentSong = playlist[currentIndex];
-
-  function handleEnded() {
-    setCurrentIndex((i) => (i + 1 < playlist.length ? i + 1 : i));
-  }
 
   return (
     <DjPage
       roomId={roomId ?? ""}
       requests={requests}
       playlist={playlist}
-      currentSong={currentSong}
       onApprove={approve}
       onRemove={reject}
-      onEnded={handleEnded}
     />
   );
 }
