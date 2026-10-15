@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createSoundCloudAdapter } from "../providers/soundcloudAdapter.ts";
 import { createYouTubeAdapter } from "../providers/youtubeAdapter.ts";
 import type { PlayerAdapters } from "./types.ts";
 
@@ -13,10 +14,12 @@ type PlayerHostsProps = {
 // whatever iframe it puts inside its container.
 function PlayerHosts({ onAdapters }: PlayerHostsProps) {
   const youtubeRef = useRef<HTMLDivElement>(null);
+  const soundcloudRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const adapters: PlayerAdapters = {
       youtube: createYouTubeAdapter(youtubeRef.current!),
+      soundcloud: createSoundCloudAdapter(soundcloudRef.current!),
     };
     onAdapters(adapters);
 
@@ -26,7 +29,12 @@ function PlayerHosts({ onAdapters }: PlayerHostsProps) {
     };
   }, [onAdapters]);
 
-  return <div ref={youtubeRef} />;
+  return (
+    <>
+      <div ref={youtubeRef} />
+      <div ref={soundcloudRef} />
+    </>
+  );
 }
 
 export default PlayerHosts;

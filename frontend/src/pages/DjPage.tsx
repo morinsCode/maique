@@ -3,7 +3,6 @@ import { Button, Stack, TextField, Typography } from "@mui/material";
 import DjUI from "../components/DjUI.tsx";
 import Playlist from "../components/Playlist.tsx";
 import PlayerControls from "../components/PlayerControls.tsx";
-import SoundCloudPlayer from "../components/SoundCloudPlayer.tsx";
 import PlayerHosts from "../playback/PlayerHosts.tsx";
 import type { PlayerAdapters } from "../playback/types.ts";
 import type { TrackRequest } from "../../../shared/types.ts";
@@ -13,10 +12,8 @@ type DjPageProps = {
   requests: TrackRequest[];
   playlist: TrackRequest[];
   currentSong: TrackRequest | undefined;
-  soundEnabled: boolean;
   onApprove: (index: number) => void;
   onRemove: (index: number) => void;
-  onEnableSound: () => void;
   onEnded: () => void;
 };
 
@@ -25,14 +22,17 @@ function DjPage({
   requests,
   playlist,
   currentSong,
-  soundEnabled,
   onApprove,
   onRemove,
-  onEnableSound,
   onEnded,
 }: DjPageProps) {
   const [adapters, setAdapters] = useState<PlayerAdapters | null>(null);
-  const youtube = adapters?.youtube;
+
+  // Pick the adapter for the current track's provider. A provider without
+  // an adapter (Spotify, for now) gives undefined.
+  const activeAdapter = currentSong
+    ? adapters?.[currentSong.service]
+    : undefined;
 
   // Room state arrives as fresh objects on every WebSocket update, so we key
   // loading on the URL (which only changes when the track really changes)
@@ -41,8 +41,7 @@ function DjPage({
   useEffect(() => {
     currentSongRef.current = currentSong;
   });
-  const youtubeUrl =
-    currentSong?.service === "youtube" ? currentSong.url : null;
+  const currentUrl = currentSong?.url;
 
   // What the player is actually doing (from its events), versus what the DJ
   // asked for (from button clicks). After a track ends, the next one starts
@@ -52,17 +51,18 @@ function DjPage({
 
   useEffect(() => {
     const song = currentSongRef.current;
-    if (!youtube || !youtubeUrl || !song) return;
-    youtube
+    if (!activeAdapter || !currentUrl || !song) return;
+    activeAdapter
       .load(song, { autoplay: wantsToPlayRef.current })
       .catch(console.error);
-  }, [youtube, youtubeUrl]);
+  }, [activeAdapter, currentUrl]);
 
   useEffect(() => {
-    if (!youtube) return;
+    if (!activeAdapter) return;
     // subscribe() returns the unsubscribe function, which React then calls
-    // as this effect's cleanup.
-    return youtube.subscribe((event) => {
+    // as this effect's cleanup. Only the active adapter is subscribed, so
+    // events from the previous provider are never heard.
+    return activeAdapter.subscribe((event) => {
       if (event.type === "playing") setIsPlaying(true);
       if (event.type === "paused") setIsPlaying(false);
       if (event.type === "ended" || event.type === "error") {
@@ -71,16 +71,16 @@ function DjPage({
         onEnded();
       }
     });
-  }, [youtube, onEnded]);
+  }, [activeAdapter, onEnded]);
 
   function handlePlay() {
     wantsToPlayRef.current = true;
-    youtube?.play().catch(console.error);
+    activeAdapter?.play().catch(console.error);
   }
 
   function handlePause() {
     wantsToPlayRef.current = false;
-    youtube?.pause().catch(console.error);
+    activeAdapter?.pause().catch(console.error);
   }
 
   return (
@@ -105,12 +105,7 @@ function DjPage({
       </Stack>
       <DjUI requests={requests} onApprove={onApprove} onRemove={onRemove} />
       <Playlist songs={playlist} />
-      {!soundEnabled && (
-        <Button variant="outlined" onClick={onEnableSound}>
-          Enable sound
-        </Button>
-      )}
-      {currentSong?.service === "youtube" && youtube && (
+      {activeAdapter && (
         <PlayerControls
           isPlaying={isPlaying}
           onPlay={handlePlay}
@@ -118,13 +113,6 @@ function DjPage({
         />
       )}
       <PlayerHosts onAdapters={setAdapters} />
-      {currentSong?.service === "soundcloud" && (
-        <SoundCloudPlayer
-          url={currentSong.url}
-          soundEnabled={soundEnabled}
-          onEnded={onEnded}
-        />
-      )}
     </>
   );
 }

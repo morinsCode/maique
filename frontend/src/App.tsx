@@ -10,7 +10,6 @@ function DjRoom() {
   const { roomId } = useParams<{ roomId: string }>();
   const { requests, playlist, approve, reject } = useRoomState(roomId ?? "");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(false);
   const currentSong = playlist[currentIndex];
 
   function handleEnded() {
@@ -23,10 +22,8 @@ function DjRoom() {
       requests={requests}
       playlist={playlist}
       currentSong={currentSong}
-      soundEnabled={soundEnabled}
       onApprove={approve}
       onRemove={reject}
-      onEnableSound={() => setSoundEnabled(true)}
       onEnded={handleEnded}
     />
   );
