@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrackRequest } from "../../../shared/types.ts";
-import type { PlayerAdapters } from "./types.ts";
+import type { PlayerAdapter, PlayerAdapters } from "./types.ts";
 
 // Owns "what is playing": which playlist position is current, which provider
 // adapter is in charge of it, and whether the DJ wants music. It only knows
@@ -30,14 +30,43 @@ export function usePlaybackController(playlist: TrackRequest[]) {
   });
   const currentUrl = currentTrack?.url;
 
+  // The adapter that most recently had a track loaded into it, so we know
+  // which player to stop when the next track belongs to a different provider.
+  const loadedAdapterRef = useRef<PlayerAdapter | undefined>(undefined);
+
   // Keying on currentIndex as well as the URL means the same song approved
   // twice in a row still plays twice.
   useEffect(() => {
     const track = currentTrackRef.current;
     if (!activeAdapter || !currentUrl || !track) return;
-    activeAdapter
-      .load(track, { autoplay: wantsToPlayRef.current })
-      .catch(console.error);
+
+    // Set by the cleanup below when a newer track comes along. Loading is
+    // async, so this run must check it after every await and bow out if it
+    // has been superseded (e.g. Next clicked several times quickly).
+    let cancelled = false;
+
+    const previous = loadedAdapterRef.current;
+    loadedAdapterRef.current = activeAdapter;
+
+    async function switchTrack(adapter: PlayerAdapter, track: TrackRequest) {
+      // Silence the old provider before starting the new one.
+      if (previous && previous !== adapter) await previous.stop();
+      if (cancelled) return;
+
+      await adapter.load(track, { autoplay: wantsToPlayRef.current });
+
+      // We lost the race while loading: a newer track on a *different*
+      // provider has taken over, so silence what we just loaded.
+      if (cancelled && loadedAdapterRef.current !== adapter) {
+        await adapter.stop();
+      }
+    }
+
+    switchTrack(activeAdapter, track).catch(console.error);
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeAdapter, currentIndex, currentUrl]);
 
   // useCallback keeps the same function between renders until the playlist
