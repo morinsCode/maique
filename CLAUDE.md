@@ -69,3 +69,19 @@ When asked to update `WORKLOG.md` with the day's work:
 - Record the local date; include commit times where useful; never invent timestamps for uncommitted work.
 - Separate completed changes, bug fixes, tests/validation, and known limitations/follow-ups.
 - Only claim something was verified if Git history, command output, or the user confirms it.
+
+## Session handoff
+
+**At the start of a new session, briefly remind the user of the "Current status" below and how to resume a previous conversation.** Keep this section up to date when a piece of work finishes.
+
+How to resume the previous Claude Code conversation (instead of starting fresh):
+- `claude --continue` — reopens the most recent conversation in this directory.
+- `claude --resume` — lists past conversations to pick from.
+
+Working style: the user is learning to code as the project progresses. Split work into small steps (one concept each), explain the code and the reasoning, give concrete manual checks (the user tests in Firefox), and commit only after the user confirms. Plans for larger features live in `~/.claude/plans/`.
+
+### Current status (updated 2026-10-15)
+
+- Branch `feat-unified-player`: unified playback controller finished — all 10 planned steps committed (`6c0c9ff` … `6b82d2b`) and manually verified in Firefox. **Not yet merged into `master`.**
+- Plan file for that work: `~/.claude/plans/pasted-content-id-7053-i-want-humble-stearns.md`.
+- Possible next steps: merge `feat-unified-player` into `master` (or open a PR); add a `WORKLOG.md` entry for 2026-10-14 and 2026-10-15; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above); test autoplay outside Firefox (especially iOS Safari).
