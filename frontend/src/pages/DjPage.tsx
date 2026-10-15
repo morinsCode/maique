@@ -44,11 +44,44 @@ function DjPage({
   const youtubeUrl =
     currentSong?.service === "youtube" ? currentSong.url : null;
 
+  // What the player is actually doing (from its events), versus what the DJ
+  // asked for (from button clicks). After a track ends, the next one starts
+  // by itself only if the DJ hadn't paused.
+  const [isPlaying, setIsPlaying] = useState(false);
+  const wantsToPlayRef = useRef(false);
+
   useEffect(() => {
     const song = currentSongRef.current;
     if (!youtube || !youtubeUrl || !song) return;
-    youtube.load(song, { autoplay: false }).catch(console.error);
+    youtube
+      .load(song, { autoplay: wantsToPlayRef.current })
+      .catch(console.error);
   }, [youtube, youtubeUrl]);
+
+  useEffect(() => {
+    if (!youtube) return;
+    // subscribe() returns the unsubscribe function, which React then calls
+    // as this effect's cleanup.
+    return youtube.subscribe((event) => {
+      if (event.type === "playing") setIsPlaying(true);
+      if (event.type === "paused") setIsPlaying(false);
+      if (event.type === "ended" || event.type === "error") {
+        if (event.type === "error") console.error(event.message);
+        setIsPlaying(false);
+        onEnded();
+      }
+    });
+  }, [youtube, onEnded]);
+
+  function handlePlay() {
+    wantsToPlayRef.current = true;
+    youtube?.play().catch(console.error);
+  }
+
+  function handlePause() {
+    wantsToPlayRef.current = false;
+    youtube?.pause().catch(console.error);
+  }
 
   return (
     <>
@@ -79,8 +112,9 @@ function DjPage({
       )}
       {currentSong?.service === "youtube" && youtube && (
         <PlayerControls
-          onPlay={() => youtube.play().catch(console.error)}
-          onPause={() => youtube.pause().catch(console.error)}
+          isPlaying={isPlaying}
+          onPlay={handlePlay}
+          onPause={handlePause}
         />
       )}
       <PlayerHosts onAdapters={setAdapters} />

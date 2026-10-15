@@ -11,6 +11,16 @@ export function createYouTubeAdapter(container: HTMLElement): PlayerAdapter {
   let player: YTPlayer | null = null;
   let destroyed = false;
 
+  // Tell every listener about an event. Delivered on a later tick (setTimeout)
+  // rather than straight away, so listener code — which may switch tracks or
+  // even destroy this player — never runs inside YouTube's own event handler.
+  function emit(event: PlayerEvent) {
+    setTimeout(() => {
+      if (destroyed) return;
+      listeners.forEach((listener) => listener(event));
+    }, 0);
+  }
+
   // Creates the player the first time it's needed (lazy), and resolves only
   // once YouTube says it's ready. Every later call gets the same promise.
   function getPlayer(): Promise<YTPlayer> {
@@ -28,7 +38,18 @@ export function createYouTubeAdapter(container: HTMLElement): PlayerAdapter {
             container.appendChild(element);
             const created = new YT.Player(element, {
               playerVars: { playsinline: 1 },
-              events: { onReady: () => resolve(created) },
+              events: {
+                onReady: () => resolve(created),
+                // Translate YouTube's numeric states into neutral events.
+                onStateChange: ({ data }) => {
+                  if (data === YT.PlayerState.PLAYING) emit({ type: "playing" });
+                  if (data === YT.PlayerState.PAUSED) emit({ type: "paused" });
+                  if (data === YT.PlayerState.ENDED) emit({ type: "ended" });
+                },
+                // e.g. 101/150: the video's owner doesn't allow embedding.
+                onError: ({ data }) =>
+                  emit({ type: "error", message: `YouTube error ${data}` }),
+              },
             });
             player = created;
           }),
