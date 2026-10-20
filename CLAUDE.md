@@ -87,8 +87,8 @@ How to resume the previous Claude Code conversation (instead of starting fresh):
 
 Working style: Split work into small steps (one concept each), explain the code and the reasoning, give concrete manual checks (the user tests in Firefox), and commit only after the user confirms. Plans for larger features live in `~/.claude/plans/`.
 
-### Current status (updated 2026-10-15)
+### Current status (updated 2026-10-20)
 
-- Branch `feat-unified-player`: unified playback controller finished — all 10 planned steps committed (`6c0c9ff` … `6b82d2b`) and manually verified in Firefox. **Not yet merged into `master`.**
-- Plan file for that work: `~/.claude/plans/pasted-content-id-7053-i-want-humble-stearns.md`.
-- Possible next steps: merge `feat-unified-player` into `master` (or open a PR); add a `WORKLOG.md` entry for 2026-10-14 and 2026-10-15; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above); test autoplay outside Firefox (especially iOS Safari).
+- Default branch is `main` (renamed from `master`). The unified playback work (`feat-unified-player`, steps `6c0c9ff` … `6b82d2b`, manually verified in Firefox) is merged into `main`.
+- Repo prepared for a public GitHub push: `README.md` rewritten for GitHub, `WORKLOG.md` removed. Not pushed yet — no remote configured.
+- Possible next steps: create the GitHub repo and push `main`; add a LICENSE; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above); test autoplay outside Firefox (especially iOS Safari).
