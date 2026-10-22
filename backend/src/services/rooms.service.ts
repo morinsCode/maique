@@ -34,3 +34,9 @@ export function rejectRequest(roomId: string, index: number): RoomState {
   room.requests.splice(index, 1);
   return room;
 }
+
+export function addToPlaylist(roomId: string, track: TrackRequest): RoomState {
+  const room = getOrCreateRoom(roomId);
+  room.playlist.push(track);
+  return room;
+}

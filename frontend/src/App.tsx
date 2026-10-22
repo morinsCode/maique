@@ -7,7 +7,8 @@ import "./App.css";
 
 function DjRoom() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { requests, playlist, approve, reject } = useRoomState(roomId ?? "");
+  const { requests, playlist, addToPlaylist, approve, reject } =
+    useRoomState(roomId ?? "");
 
   return (
     <DjPage
@@ -16,6 +17,7 @@ function DjRoom() {
       playlist={playlist}
       onApprove={approve}
       onRemove={reject}
+      onAddToPlaylist={addToPlaylist}
     />
   );
 }

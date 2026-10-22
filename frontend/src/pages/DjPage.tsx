@@ -1,5 +1,6 @@
 import { Button, Stack, TextField, Typography } from "@mui/material";
 import DjUI from "../components/DjUI.tsx";
+import TrackUrlForm from "../components/TrackUrlForm.tsx";
 import Playlist from "../components/Playlist.tsx";
 import PlayerControls from "../components/PlayerControls.tsx";
 import PlayerHosts from "../playback/PlayerHosts.tsx";
@@ -12,6 +13,7 @@ type DjPageProps = {
   playlist: TrackRequest[];
   onApprove: (index: number) => void;
   onRemove: (index: number) => void;
+  onAddToPlaylist: (track: TrackRequest) => void;
 };
 
 function DjPage({
@@ -20,6 +22,7 @@ function DjPage({
   playlist,
   onApprove,
   onRemove,
+  onAddToPlaylist,
 }: DjPageProps) {
   const playback = usePlaybackController(playlist);
 
@@ -43,6 +46,12 @@ function DjPage({
           Copy
         </Button>
       </Stack>
+      <TrackUrlForm
+        title="Add to playlist"
+        submitLabel="Add"
+        guest="DJ"
+        onSubmit={onAddToPlaylist}
+      />
       <DjUI requests={requests} onApprove={onApprove} onRemove={onRemove} />
       <Playlist songs={playlist} />
       {playback.currentTrack ? (

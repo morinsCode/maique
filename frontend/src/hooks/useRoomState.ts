@@ -63,6 +63,14 @@ export function useRoomState(roomId: string) {
     });
   }
 
+  async function addToPlaylist(track: TrackRequest) {
+    await fetch(`/rooms/${roomId}/playlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(track),
+    });
+  }
+
   async function approve(index: number) {
     await fetch(`/rooms/${roomId}/approve`, {
       method: "POST",
@@ -79,5 +87,5 @@ export function useRoomState(roomId: string) {
     });
   }
 
-  return { ...state, submitRequest, approve, reject };
+  return { ...state, submitRequest, addToPlaylist, approve, reject };
 }
