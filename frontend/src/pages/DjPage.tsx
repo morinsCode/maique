@@ -5,15 +5,16 @@ import Playlist from "../components/Playlist.tsx";
 import PlayerControls from "../components/PlayerControls.tsx";
 import PlayerHosts from "../playback/PlayerHosts.tsx";
 import { usePlaybackController } from "../playback/usePlaybackController.ts";
-import type { TrackRequest } from "../../../shared/types.ts";
+import type { PlaylistEntry, TrackRequest } from "../../../shared/types.ts";
 
 type DjPageProps = {
   roomId: string;
   requests: TrackRequest[];
-  playlist: TrackRequest[];
+  playlist: PlaylistEntry[];
   onApprove: (index: number) => void;
   onRemove: (index: number) => void;
   onAddToPlaylist: (track: TrackRequest) => void;
+  onRemoveFromPlaylist: (id: string) => void;
 };
 
 function DjPage({
@@ -23,6 +24,7 @@ function DjPage({
   onApprove,
   onRemove,
   onAddToPlaylist,
+  onRemoveFromPlaylist,
 }: DjPageProps) {
   const playback = usePlaybackController(playlist);
 
@@ -96,6 +98,7 @@ function DjPage({
         songs={playlist}
         currentIndex={playback.currentIndex}
         onSelect={playback.playAt}
+        onRemove={onRemoveFromPlaylist}
       />
     </>
   );

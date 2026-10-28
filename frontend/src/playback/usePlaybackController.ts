@@ -1,15 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TrackRequest } from "../../../shared/types.ts";
+import type { PlaylistEntry, TrackRequest } from "../../../shared/types.ts";
 import type { PlayerAdapter, PlayerAdapters } from "./types.ts";
 
 // How long to wait for a "playing" event after asking a player to start,
 // before assuming the browser blocked it.
 const BLOCKED_AFTER_MS = 5000;
 
+// Where the current song is in `next`, given it was at `index` in `prev`.
+// Songs are matched by id, so deleting songs before it doesn't move playback
+// onto a different song. If the current song itself was deleted, the first
+// surviving song after it takes over ("skip to next"). If none survived, the
+// result is just past the last surviving song before it: the same "past the
+// end" spot the queue reaches when it runs out, where a newly added song is
+// only cued.
+function followCurrentSong(
+  prev: PlaylistEntry[],
+  next: PlaylistEntry[],
+  index: number,
+): number {
+  const indexInNext = (entry: PlaylistEntry) =>
+    next.findIndex((e) => e.id === entry.id);
+
+  for (let i = index; i < prev.length; i++) {
+    const found = indexInNext(prev[i]);
+    if (found !== -1) return found;
+  }
+  for (let i = index - 1; i >= 0; i--) {
+    const found = indexInNext(prev[i]);
+    if (found !== -1) return found + 1;
+  }
+  return 0;
+}
+
 // Owns "what is playing": which playlist position is current, which provider
 // adapter is in charge of it, and whether the DJ wants music. It only knows
 // the PlayerAdapter contract — never YouTube or SoundCloud specifics.
-export function usePlaybackController(playlist: TrackRequest[]) {
+export function usePlaybackController(playlist: PlaylistEntry[]) {
   const [adapters, setAdapters] = useState<PlayerAdapters | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -54,7 +80,18 @@ export function usePlaybackController(playlist: TrackRequest[]) {
   // Don't leave a timer running after the DJ page is gone.
   useEffect(() => () => clearTimeout(blockedTimerRef.current), []);
 
-  const currentTrack: TrackRequest | undefined = playlist[currentIndex];
+  // Every new playlist (e.g. after a delete) may have shifted the songs, so
+  // move currentIndex to wherever the current song is now. Doing this during
+  // render (React's "adjust state when a prop changes" pattern) means React
+  // re-renders straight away, before any effect could load the wrong song.
+  const [prevPlaylist, setPrevPlaylist] = useState(playlist);
+  if (playlist !== prevPlaylist) {
+    setPrevPlaylist(playlist);
+    const index = followCurrentSong(prevPlaylist, playlist, currentIndex);
+    if (index !== currentIndex) setCurrentIndex(index);
+  }
+
+  const currentTrack: PlaylistEntry | undefined = playlist[currentIndex];
   const activeService = currentTrack?.service;
   // A provider without an adapter (Spotify, for now) gives undefined.
   const activeAdapter = activeService ? adapters?.[activeService] : undefined;
@@ -64,23 +101,36 @@ export function usePlaybackController(playlist: TrackRequest[]) {
   const canGoPrevious = currentIndex > 0;
 
   // Room state arrives as fresh objects on every WebSocket update, so loading
-  // is keyed on the position and URL (which only change when the track really
+  // is keyed on the track's id (which only changes when the track really
   // changes) and the latest track object is read through a ref.
   const currentTrackRef = useRef(currentTrack);
   useEffect(() => {
     currentTrackRef.current = currentTrack;
   });
-  const currentUrl = currentTrack?.url;
+  const currentId = currentTrack?.id;
 
   // The adapter that most recently had a track loaded into it, so we know
   // which player to stop when the next track belongs to a different provider.
   const loadedAdapterRef = useRef<PlayerAdapter | undefined>(undefined);
 
-  // Keying on currentIndex as well as the URL means the same song approved
-  // twice in a row still plays twice.
+  // Keyed on the id, not the position: deleting a song before the current one
+  // changes currentIndex but not the song, so it must not reload (and restart)
+  // it. Every playlist entry has its own id, so the same song approved twice
+  // in a row still plays twice.
   useEffect(() => {
     const track = currentTrackRef.current;
-    if (!activeAdapter || !currentUrl || !track) return;
+    if (!track) {
+      // Nothing to play: the queue ran out, or the last song was deleted
+      // while it played. Silence whatever was loaded and, as when the queue
+      // runs out, let the next added song only be cued.
+      wantsToPlayRef.current = false;
+      setPlaying(false);
+      const loaded = loadedAdapterRef.current;
+      loadedAdapterRef.current = undefined;
+      loaded?.stop().catch(console.error);
+      return;
+    }
+    if (!activeAdapter || !currentId) return;
 
     // Set by the cleanup below when a newer track comes along. Loading is
     // async, so this run must check it after every await and bow out if it
@@ -115,7 +165,13 @@ export function usePlaybackController(playlist: TrackRequest[]) {
       // A hint about the previous track no longer applies.
       clearBlocked();
     };
-  }, [activeAdapter, currentIndex, currentUrl, expectPlaying, clearBlocked]);
+  }, [
+    activeAdapter,
+    currentId,
+    expectPlaying,
+    clearBlocked,
+    setPlaying,
+  ]);
 
   // useCallback keeps the same function between renders until the playlist
   // length changes, so the subscription below isn't redone on every render.

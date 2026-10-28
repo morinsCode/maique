@@ -45,6 +45,18 @@ export function addToPlaylist(req: Request<RoomParams>, res: Response) {
   res.json(room);
 }
 
+export function removeFromPlaylist(
+  req: Request<RoomParams & { trackId: string }>,
+  res: Response,
+) {
+  const room = roomsService.removeFromPlaylist(
+    req.params.roomId,
+    req.params.trackId,
+  );
+  broadcastRoom(req.params.roomId, room);
+  res.json(room);
+}
+
 export function approveRequest(req: Request<RoomParams>, res: Response) {
   const { index } = req.body ?? {};
   if (typeof index !== "number") {

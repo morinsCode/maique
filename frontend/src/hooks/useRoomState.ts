@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { TrackRequest } from "../../../shared/types.ts";
+import type { PlaylistEntry, TrackRequest } from "../../../shared/types.ts";
 
 type RoomState = {
   requests: TrackRequest[];
-  playlist: TrackRequest[];
+  playlist: PlaylistEntry[];
 };
 
 // Fetches a room's state from the backend, keeps it live via WebSocket, and exposes mutations as REST calls.
@@ -71,6 +71,10 @@ export function useRoomState(roomId: string) {
     });
   }
 
+  async function removeFromPlaylist(id: string) {
+    await fetch(`/rooms/${roomId}/playlist/${id}`, { method: "DELETE" });
+  }
+
   async function approve(index: number) {
     await fetch(`/rooms/${roomId}/approve`, {
       method: "POST",
@@ -87,5 +91,12 @@ export function useRoomState(roomId: string) {
     });
   }
 
-  return { ...state, submitRequest, addToPlaylist, approve, reject };
+  return {
+    ...state,
+    submitRequest,
+    addToPlaylist,
+    removeFromPlaylist,
+    approve,
+    reject,
+  };
 }
