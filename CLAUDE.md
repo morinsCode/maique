@@ -21,6 +21,8 @@ Frontend (`frontend/`):
 - `npm run lint` — ESLint
 - No test suite exists yet.
 
+Production: `docker compose up --build` at the repo root builds one image in which the backend (with `STATIC_DIR` set) also serves the built frontend, on `127.0.0.1:3100`.
+
 Run backend and frontend dev servers concurrently (separate terminals) for local multi-device testing — open the DJ page and a guest page on different devices on the same network, pointed at the same room ID.
 
 ## Architecture
@@ -99,4 +101,5 @@ Working style: Split work into small steps (one concept each), explain the code 
   - Clickable playlist rows play that song, current song highlighted (`049a5a7`, verified in Firefox).
   - Delete a playlist song; playlist entries now have ids (`c0addb1`; restart-on-delete fix included, retest not confirmed).
   - Drag-and-drop reordering of the playlist with dnd-kit (committed without a confirmed Firefox check).
-- Possible next steps: push `main`; `npm audit` in `frontend/` reports 4 high-severity issues in vite and zod (pre-existing, `npm audit fix` available); the frontend bundle is now just over Vite's 500 kB warning; add a LICENSE; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above, including the note about tracks with no adapter); test autoplay outside Firefox (especially iOS Safari).
+- **In progress — deploying to the VPS** (Docker + the existing Nginx reverse-proxy container): `5e9f5d9` adds the `Dockerfile`, `.dockerignore`, `docker-compose.yml` (publishes `127.0.0.1:3100`) and `STATIC_DIR`/`PORT` support in `backend/src/server.ts`; verified locally with `docker compose up --build`. The VPS has been inspected but not changed yet. The VPS-specific findings and the exact next steps are in the local (not committed) file `~/.claude/plans/maique-vps-deploy.md` — read it first when resuming. Next: push `main`, then step 1 (DNS) of that file.
+- Possible next steps: `npm audit` in `frontend/` reports 4 high-severity issues in vite and zod (pre-existing, `npm audit fix` available); the frontend bundle is now just over Vite's 500 kB warning; add a LICENSE; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above, including the note about tracks with no adapter); test autoplay outside Firefox (especially iOS Safari).
