@@ -165,6 +165,19 @@ export function usePlaybackController(playlist: TrackRequest[]) {
       .catch(console.error);
   }
 
+  // Clicking a song in the playlist is an explicit request to hear it, so it
+  // always plays (unlike approving, which only cues).
+  function playAt(index: number) {
+    if (index === currentIndex) {
+      // Already loaded, so the load effect won't run again: just resume
+      // (no-op if it's already playing).
+      play();
+      return;
+    }
+    wantsToPlayRef.current = true;
+    setCurrentIndex(index);
+  }
+
   function pause() {
     wantsToPlayRef.current = false;
     clearBlocked();
@@ -179,6 +192,7 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     canGoNext,
     canGoPrevious,
     play,
+    playAt,
     pause,
     next,
     previous,

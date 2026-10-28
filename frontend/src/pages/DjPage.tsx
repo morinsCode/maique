@@ -92,7 +92,11 @@ function DjPage({
         guest="DJ"
         onSubmit={onAddToPlaylist}
       />
-      <Playlist songs={playlist} />
+      <Playlist
+        songs={playlist}
+        currentIndex={playback.currentIndex}
+        onSelect={playback.playAt}
+      />
     </>
   );
 }
