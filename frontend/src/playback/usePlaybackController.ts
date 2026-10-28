@@ -7,29 +7,26 @@ import type { PlayerAdapter, PlayerAdapters } from "./types.ts";
 const BLOCKED_AFTER_MS = 5000;
 
 // Where the current song is in `next`, given it was at `index` in `prev`.
-// Songs are matched by id, so deleting songs before it doesn't move playback
-// onto a different song. If the current song itself was deleted, the first
-// surviving song after it takes over ("skip to next"). If none survived, the
-// result is just past the last surviving song before it: the same "past the
-// end" spot the queue reaches when it runs out, where a newly added song is
-// only cued.
+// Songs are matched by id, so deleting or reordering songs around it doesn't
+// move playback onto a different song. If the current song itself was
+// deleted, the first surviving song after it takes over ("skip to next"). If
+// none survived, the result is "past the end": the spot the queue reaches when
+// it runs out, where a newly added song is only cued. That spot is counted
+// (how many earlier songs are still there) rather than taken from a song's
+// position, so it stays past the end when those songs are reordered.
 function followCurrentSong(
   prev: PlaylistEntry[],
   next: PlaylistEntry[],
   index: number,
 ): number {
-  const indexInNext = (entry: PlaylistEntry) =>
-    next.findIndex((e) => e.id === entry.id);
+  const isInNext = (entry: PlaylistEntry) =>
+    next.some((e) => e.id === entry.id);
 
   for (let i = index; i < prev.length; i++) {
-    const found = indexInNext(prev[i]);
+    const found = next.findIndex((e) => e.id === prev[i].id);
     if (found !== -1) return found;
   }
-  for (let i = index - 1; i >= 0; i--) {
-    const found = indexInNext(prev[i]);
-    if (found !== -1) return found + 1;
-  }
-  return 0;
+  return prev.slice(0, index).filter(isInNext).length;
 }
 
 // Owns "what is playing": which playlist position is current, which provider

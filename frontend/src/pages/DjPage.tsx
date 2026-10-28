@@ -15,6 +15,7 @@ type DjPageProps = {
   onRemove: (index: number) => void;
   onAddToPlaylist: (track: TrackRequest) => void;
   onRemoveFromPlaylist: (id: string) => void;
+  onMoveInPlaylist: (id: string, toIndex: number) => void;
 };
 
 function DjPage({
@@ -25,6 +26,7 @@ function DjPage({
   onRemove,
   onAddToPlaylist,
   onRemoveFromPlaylist,
+  onMoveInPlaylist,
 }: DjPageProps) {
   const playback = usePlaybackController(playlist);
 
@@ -99,6 +101,7 @@ function DjPage({
         currentIndex={playback.currentIndex}
         onSelect={playback.playAt}
         onRemove={onRemoveFromPlaylist}
+        onMove={onMoveInPlaylist}
       />
     </>
   );

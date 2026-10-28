@@ -6,6 +6,20 @@ type RoomState = {
   playlist: PlaylistEntry[];
 };
 
+// Returns a copy of the playlist with the entry `id` moved to `toIndex`
+// (the same reorder the backend does).
+function moveEntry(
+  playlist: PlaylistEntry[],
+  id: string,
+  toIndex: number,
+): PlaylistEntry[] {
+  const entry = playlist.find((e) => e.id === id);
+  if (!entry) return playlist;
+  const rest = playlist.filter((e) => e !== entry);
+  rest.splice(toIndex, 0, entry);
+  return rest;
+}
+
 // Fetches a room's state from the backend, keeps it live via WebSocket, and exposes mutations as REST calls.
 export function useRoomState(roomId: string) {
   const [state, setState] = useState<RoomState>({ requests: [], playlist: [] });
@@ -75,6 +89,17 @@ export function useRoomState(roomId: string) {
     await fetch(`/rooms/${roomId}/playlist/${id}`, { method: "DELETE" });
   }
 
+  async function moveInPlaylist(id: string, toIndex: number) {
+    // Reorder locally first, so a dropped row doesn't jump back until the
+    // WebSocket update arrives. That update then replaces this state as usual.
+    setState((s) => ({ ...s, playlist: moveEntry(s.playlist, id, toIndex) }));
+    await fetch(`/rooms/${roomId}/playlist/${id}/move`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toIndex }),
+    });
+  }
+
   async function approve(index: number) {
     await fetch(`/rooms/${roomId}/approve`, {
       method: "POST",
@@ -96,6 +121,7 @@ export function useRoomState(roomId: string) {
     submitRequest,
     addToPlaylist,
     removeFromPlaylist,
+    moveInPlaylist,
     approve,
     reject,
   };

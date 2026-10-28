@@ -57,6 +57,24 @@ export function removeFromPlaylist(
   res.json(room);
 }
 
+export function moveInPlaylist(
+  req: Request<RoomParams & { trackId: string }>,
+  res: Response,
+) {
+  const { toIndex } = req.body ?? {};
+  if (!Number.isInteger(toIndex)) {
+    res.status(400).json({ error: "toIndex must be an integer" });
+    return;
+  }
+  const room = roomsService.moveInPlaylist(
+    req.params.roomId,
+    req.params.trackId,
+    toIndex,
+  );
+  broadcastRoom(req.params.roomId, room);
+  res.json(room);
+}
+
 export function approveRequest(req: Request<RoomParams>, res: Response) {
   const { index } = req.body ?? {};
   if (typeof index !== "number") {

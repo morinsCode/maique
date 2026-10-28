@@ -47,3 +47,17 @@ export function removeFromPlaylist(roomId: string, id: string): RoomState {
   room.playlist = room.playlist.filter((entry) => entry.id !== id);
   return room;
 }
+
+export function moveInPlaylist(
+  roomId: string,
+  id: string,
+  toIndex: number,
+): RoomState {
+  const room = getOrCreateRoom(roomId);
+  const from = room.playlist.findIndex((entry) => entry.id === id);
+  if (from === -1) return room;
+  const [entry] = room.playlist.splice(from, 1);
+  const to = Math.max(0, Math.min(toIndex, room.playlist.length));
+  room.playlist.splice(to, 0, entry);
+  return room;
+}

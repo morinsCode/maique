@@ -12,6 +12,7 @@ function DjRoom() {
     playlist,
     addToPlaylist,
     removeFromPlaylist,
+    moveInPlaylist,
     approve,
     reject,
   } = useRoomState(roomId ?? "");
@@ -25,6 +26,7 @@ function DjRoom() {
       onRemove={reject}
       onAddToPlaylist={addToPlaylist}
       onRemoveFromPlaylist={removeFromPlaylist}
+      onMoveInPlaylist={moveInPlaylist}
     />
   );
 }
