@@ -1,0 +1,7 @@
+services:
+  maique:
+    build: .
+    restart: unless-stopped
+    ports:
+      # Only reachable from the VPS itself; Nginx proxies the public traffic.
+      - "127.0.0.1:3100:3000"
