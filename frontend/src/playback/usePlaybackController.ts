@@ -59,6 +59,9 @@ export function usePlaybackController(playlist: TrackRequest[]) {
   // A provider without an adapter (Spotify, for now) gives undefined.
   const activeAdapter = activeService ? adapters?.[activeService] : undefined;
   const canGoNext = currentIndex + 1 < playlist.length;
+  // Also true after the queue has run out (currentIndex is then one past the
+  // end), so the DJ can go back to the last track.
+  const canGoPrevious = currentIndex > 0;
 
   // Room state arrives as fresh objects on every WebSocket update, so loading
   // is keyed on the position and URL (which only change when the track really
@@ -120,6 +123,12 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     setCurrentIndex((i) => (i + 1 < playlist.length ? i + 1 : i));
   }, [playlist.length]);
 
+  // Follows the same play intent as next(): plays right away if the DJ is
+  // playing, otherwise the earlier track is only cued.
+  const previous = useCallback(() => {
+    setCurrentIndex((i) => (i > 0 ? i - 1 : i));
+  }, []);
+
   // Like next(), but used when a track finishes: it may step one past the
   // last track. currentTrack is then undefined (nothing to play), and as soon
   // as a new track is approved, playlist[currentIndex] exists again and the
@@ -168,9 +177,11 @@ export function usePlaybackController(playlist: TrackRequest[]) {
     isPlaying,
     isBlocked,
     canGoNext,
+    canGoPrevious,
     play,
     pause,
     next,
+    previous,
     // Everything <PlayerHosts> needs, ready to spread onto it.
     hostProps: { activeService, onAdapters: setAdapters },
   };

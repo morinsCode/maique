@@ -65,14 +65,26 @@ function DjPage({
           isPlaying={playback.isPlaying}
           isBlocked={playback.isBlocked}
           canGoNext={playback.canGoNext}
+          canGoPrevious={playback.canGoPrevious}
           onPlay={playback.play}
           onPause={playback.pause}
           onNext={playback.next}
+          onPrevious={playback.previous}
         />
       ) : (
-        <Typography sx={{ padding: 2 }}>
-          Waiting for the next approved track…
-        </Typography>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ padding: 2, alignItems: "center" }}
+        >
+          {/* After the queue has run out, the DJ can still go back. */}
+          {playback.canGoPrevious && (
+            <Button variant="outlined" onClick={playback.previous}>
+              Previous
+            </Button>
+          )}
+          <Typography>Waiting for the next approved track…</Typography>
+        </Stack>
       )}
       <TrackUrlForm
         title="Add to playlist"
