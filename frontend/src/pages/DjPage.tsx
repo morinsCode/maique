@@ -1,5 +1,5 @@
-import { Button, Stack, TextField, Typography } from "@mui/material";
-import DjUI from "../components/DjUI.tsx";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import GuestRequests from "../components/GuestRequests.tsx";
 import TrackUrlForm from "../components/TrackUrlForm.tsx";
 import Playlist from "../components/Playlist.tsx";
 import PlayerControls from "../components/PlayerControls.tsx";
@@ -46,14 +46,20 @@ function DjPage({
           Copy
         </Button>
       </Stack>
-      <TrackUrlForm
-        title="Add to playlist"
-        submitLabel="Add"
-        guest="DJ"
-        onSubmit={onAddToPlaylist}
-      />
-      <DjUI requests={requests} onApprove={onApprove} onRemove={onRemove} />
-      <Playlist songs={playlist} />
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        sx={{ padding: 2, alignItems: "flex-start" }}
+      >
+        <Box>
+          <PlayerHosts {...playback.hostProps} />
+        </Box>
+        <GuestRequests
+          requests={requests}
+          onApprove={onApprove}
+          onRemove={onRemove}
+        />
+      </Stack>
       {playback.currentTrack ? (
         <PlayerControls
           isPlaying={playback.isPlaying}
@@ -68,7 +74,13 @@ function DjPage({
           Waiting for the next approved track…
         </Typography>
       )}
-      <PlayerHosts {...playback.hostProps} />
+      <TrackUrlForm
+        title="Add to playlist"
+        submitLabel="Add"
+        guest="DJ"
+        onSubmit={onAddToPlaylist}
+      />
+      <Playlist songs={playlist} />
     </>
   );
 }
