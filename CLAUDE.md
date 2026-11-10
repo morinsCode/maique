@@ -91,15 +91,20 @@ How to resume the previous Claude Code conversation (instead of starting fresh):
 
 Working style: Split work into small steps (one concept each), explain the code and the reasoning, give concrete manual checks (the user tests in Firefox), and commit only after the user confirms. Plans for larger features live in `~/.claude/plans/`.
 
-### Current status (updated 2026-10-28)
+### Current status (updated 2026-11-10)
 
 - Default branch is `main`, published on GitHub (`origin` = `git@github.com:morinsCode/maique.git`). The unified playback work (`feat-unified-player`, steps `6c0c9ff` … `6b82d2b`, manually verified in Firefox) is merged into `main`.
 - DJ can add a track straight to the playlist without approval (`feat-dj-add-track`, `ea2ba3a`, manually verified in Firefox, fast-forwarded into `main`): `POST /rooms/:roomId/playlist`, `addToPlaylist` in `useRoomState`, and a shared `components/TrackUrlForm.tsx` used by both `GuestUI` and `DjPage`.
-- DJ page improvements on `main` (2026-10-28, not pushed yet):
+- DJ page improvements on `main` (2026-10-28, pushed):
   - `DjUI` renamed to `components/GuestRequests.tsx`, shown beside the player (`de2105e`, verified in Firefox).
   - Previous button, also available after the queue has ended (`32a241e`, committed without a confirmed Firefox check).
   - Clickable playlist rows play that song, current song highlighted (`049a5a7`, verified in Firefox).
   - Delete a playlist song; playlist entries now have ids (`c0addb1`; restart-on-delete fix included, retest not confirmed).
   - Drag-and-drop reordering of the playlist with dnd-kit (committed without a confirmed Firefox check).
-- **In progress — deploying to the VPS** (Docker + the existing Nginx reverse-proxy container): `5e9f5d9` adds the `Dockerfile`, `.dockerignore`, `docker-compose.yml` (publishes `127.0.0.1:3100`) and `STATIC_DIR`/`PORT` support in `backend/src/server.ts`; verified locally with `docker compose up --build`. The VPS has been inspected but not changed yet. The VPS-specific findings and the exact next steps are in the local (not committed) file `~/.claude/plans/maique-vps-deploy.md` — read it first when resuming. Next: push `main`, then step 1 (DNS) of that file.
+- **Deployed (2026-11-10)** at `https://maique.morinscode.dev`, verified in Firefox and on a phone (HTTPS, live WebSocket updates, Copy button).
+  - `5e9f5d9` adds the `Dockerfile`, `.dockerignore`, `docker-compose.yml` (publishes `127.0.0.1:3100`) and `STATIC_DIR`/`PORT` support in `backend/src/server.ts`. `9b6e526` ignores `docker-compose.override.yml`, which exists only on the VPS and joins the reverse proxy's Docker network.
+  - Nginx and the Let's Encrypt certificate live in the separate infra repo `mscode-vps-infra` (local copy `~/codes/projects/mscode-vps-infra`; edit there, push, then `git pull` on the VPS). MaiQue's server block is `b06b17c` there.
+  - Redeploy MaiQue: on the VPS, `cd ~/projects/maique && git pull && docker compose up -d --build`. This empties all rooms (state is in memory).
+  - VPS-specific details are in the local (not committed) file `~/.claude/plans/maique-vps-deploy.md`.
+  - Optional follow-up from there: the infra `reverse-proxy` service has no `restart:` policy, so it may not come back after a VPS reboot.
 - Possible next steps: `npm audit` in `frontend/` reports 4 high-severity issues in vite and zod (pre-existing, `npm audit fix` available); the frontend bundle is now just over Vite's 500 kB warning; add a LICENSE; Spotify adapter (`providers/spotifyAdapter.ts`, see "Unified playback" above, including the note about tracks with no adapter); test autoplay outside Firefox (especially iOS Safari).
