@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+
 
 function generateRoomId() {
   return Math.random().toString(36).slice(2, 8);
@@ -60,8 +61,8 @@ function LandingPage() {
         </Typography>
 
         <Typography
-          component="a"
-          href="#how-it-works"
+          component={RouterLink}
+          to="/how-it-works"
           sx={{
             color: "inherit",
             fontFamily: "monospace",

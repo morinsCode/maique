@@ -2,6 +2,7 @@ import { Routes, Route, useParams } from "react-router";
 import LandingPage from "./pages/LandingPage.tsx";
 import GuestPage from "./pages/GuestPage.tsx";
 import DjPage from "./pages/DjPage.tsx";
+import HowItWorksPage from "./pages/HowItWorksPage.tsx";
 import { useRoomState } from "./hooks/useRoomState.ts";
 import "./App.css";
 
@@ -43,6 +44,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/guest/:roomId" element={<GuestRoom />} />
       <Route path="/dj/:roomId" element={<DjRoom />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
     </Routes>
   );
 }
