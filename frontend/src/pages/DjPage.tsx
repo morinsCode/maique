@@ -1,4 +1,11 @@
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+  Container,
+} from "@mui/material";
 import GuestRequests from "../components/GuestRequests.tsx";
 import TrackUrlForm from "../components/TrackUrlForm.tsx";
 import Playlist from "../components/Playlist.tsx";
@@ -31,7 +38,7 @@ function DjPage({
   const playback = usePlaybackController(playlist);
 
   return (
-    <>
+    <Container>
       <Stack
         direction="row"
         spacing={1}
@@ -103,7 +110,7 @@ function DjPage({
         onRemove={onRemoveFromPlaylist}
         onMove={onMoveInPlaylist}
       />
-    </>
+    </Container>
   );
 }
 

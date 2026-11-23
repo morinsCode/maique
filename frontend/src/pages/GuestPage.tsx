@@ -1,3 +1,5 @@
+import { Container } from "@mui/material";
+
 import GuestUI from "../components/GuestUI.tsx";
 import type { TrackRequest } from "../../../shared/types.ts";
 
@@ -6,7 +8,11 @@ type GuestPageProps = {
 };
 
 function GuestPage({ onSubmit }: GuestPageProps) {
-  return <GuestUI onSubmit={onSubmit} />;
+  return (
+    <Container>
+      <GuestUI onSubmit={onSubmit} />
+    </Container>
+  );
 }
 
 export default GuestPage;
